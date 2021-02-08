@@ -1,4 +1,4 @@
-from ot import _OperationBase, Ins, Del, tii, tid, tdi, tdd
+from ot import Ins, Del, tii, tid, tdi, tdd, transform
 
 def assert_op(op, p, v):
   assert(op.pos==p)
@@ -59,13 +59,17 @@ def test_tii():
   oi1_val = "abcd"
   oi2_val = "1234567"
 
-  o1 = Ins(id="2", pos=1, value=oi1_val)
-  o2 = Ins(id="1", pos=1, value=oi2_val)
+  o1 = Ins(pos=1, value=oi1_val)
+  o1.id = "2"
+  o2 = Ins(pos=1, value=oi2_val)
+  o2.id= "1"
   to = tii(o1, o2)
   assert_op(to, 1, oi1_val)
 
-  o1 = Ins(id="1", pos=1, value=oi1_val)
-  o2 = Ins(id="2", pos=1, value=oi2_val)
+  o1 = Ins(pos=1, value=oi1_val)
+  o1.id= "1"
+  o2 = Ins(pos=1, value=oi2_val)
+  o2.id= "2"
   to = tii(o1, o2)
   assert_op(to, 1+len(oi2_val), oi1_val)
 
@@ -78,3 +82,10 @@ def test_tii():
   o2 = Ins(pos=1, value=oi2_val)
   to = tii(o1, o2)
   assert_op(to, 10 + len(oi2_val) , oi1_val)
+
+# def test_transform():
+#   oi_val = "hahaha"
+#   o1 = Ins(pos=1, value=oi_val)
+#   o1 = Ins(pos=1, value=oi_val)
+#   o2 = Del(pos=1, value=3)
+#   tid(o1, o2) = transform(o1, o2)
