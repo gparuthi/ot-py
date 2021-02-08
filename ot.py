@@ -26,7 +26,7 @@ class Operator(Enum):
   Delete = 1
 
 @dataclass
-class _Operation: 
+class _OperationBase: 
   pos: int
   value: Union[int, str]
   id: int = uuid()
@@ -35,29 +35,29 @@ class _Operation:
       return f"O(p={self.pos}, v={self.value})"
 
 @dataclass
-class Ins(_Operation):
+class Ins(_OperationBase):
   op = Operator.Insert
 
 @dataclass
-class Del(_Operation):
+class Del(_OperationBase):
   op = Operator.Delete
 
-def tii(oi1: _Operation, oi2: _Operation):
+def tii(oi1: _OperationBase, oi2: _OperationBase):
   if oi1.pos > oi2.pos or (oi1.pos == oi2.pos and oi1.id < oi2.id):
     oi1.pos += len(oi2.value)
   return oi1
 
-def tid(oi: _Operation, od: _Operation):
+def tid(oi: _OperationBase, od: _OperationBase):
   if oi.pos > od.pos: 
     oi.pos -= od.value
   return oi
 
-def tdi(od: _Operation, oi: _Operation):
+def tdi(od: _OperationBase, oi: _OperationBase):
   if od.pos >= oi.pos:
     od.pos += len(oi.value)
   return od
 
-def tdd(od1: _Operation, od2: _Operation):
+def tdd(od1: _OperationBase, od2: _OperationBase):
   if od1.pos > od2.pos:
     # if od1 pos is within the range of od2's impact
     od2_end = od2.pos + od2.value

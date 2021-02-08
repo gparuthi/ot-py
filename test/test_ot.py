@@ -1,4 +1,4 @@
-from ot import _Operation, Ins, Del, tii, tid, tdi, tdd
+from ot import _OperationBase, Ins, Del, tii, tid, tdi, tdd
 
 def assert_op(op, p, v):
   assert(op.pos==p)
