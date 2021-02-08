@@ -43,32 +43,36 @@ class Del(_OperationBase):
 Operation = Union[Ins, Del]
 
 def tii(oi1: Ins, oi2: Ins):
+  fin = oi1.clone()
   if oi1.pos > oi2.pos or (oi1.pos == oi2.pos and oi1.id < oi2.id):
-    oi1.pos += len(oi2.value)
-  return oi1
+    fin.pos += len(oi2.value)
+  return fin
 
 def tid(oi: Ins, od: Del):
+  fin = oi.clone()
   if oi.pos > od.pos: 
-    oi.pos -= od.value
-  return oi
+    fin.pos -= od.value
+  return fin
 
 def tdi(od: Del, oi: Ins):
+  fin = od.clone()
   if od.pos >= oi.pos:
-    od.pos += len(oi.value)
-  return od
+    fin.pos += len(oi.value)
+  return fin
 
 def tdd(od1: Del, od2: Del):
+  fin = od1.clone()
   if od1.pos > od2.pos:
     # if od1 pos is within the range of od2's impact
     od2_end = od2.pos + od2.value
     if od1.pos < od2_end:
       overlap = max(0, (od2_end-od1.pos))
       if overlap:
-        od1.pos = od2.pos
-        od1.value = od1.value - overlap
+        fin.pos = od2.pos
+        fin.value = od1.value - overlap
     else:
-      od1.pos -= od2.value
-  return od1
+      fin.pos -= od2.value
+  return fin
 
 
 def transform(o1: Operation, o2: Operation):
