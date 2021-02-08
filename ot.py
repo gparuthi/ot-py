@@ -24,34 +24,40 @@ from uuid import uuid1 as uuid
 class Operator(Enum):
   Insert = 0
   Delete = 1
-  Skip = 2
 
 @dataclass
-class Operation: 
+class _Operation: 
   pos: int
-  op: Operator
   value: Union[int, str]
   id: int = uuid()
 
   def __repr__(self) -> str:
       return f"O(p={self.pos}, v={self.value})"
 
-def tii(oi1: Operation, oi2: Operation):
+@dataclass
+class Ins(_Operation):
+  op = Operator.Insert
+
+@dataclass
+class Del(_Operation):
+  op = Operator.Delete
+
+def tii(oi1: _Operation, oi2: _Operation):
   if oi1.pos > oi2.pos or (oi1.pos == oi2.pos and oi1.id < oi2.id):
     oi1.pos += len(oi2.value)
   return oi1
 
-def tid(oi: Operation, od: Operation):
+def tid(oi: _Operation, od: _Operation):
   if oi.pos > od.pos: 
     oi.pos -= od.value
   return oi
 
-def tdi(od: Operation, oi: Operation):
+def tdi(od: _Operation, oi: _Operation):
   if od.pos >= oi.pos:
     od.pos += len(oi.value)
   return od
 
-def tdd(od1: Operation, od2: Operation):
+def tdd(od1: _Operation, od2: _Operation):
   if od1.pos > od2.pos:
     # if od1 pos is within the range of od2's impact
     od2_end = od2.pos + od2.value
