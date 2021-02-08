@@ -7,6 +7,12 @@ class Message:
   version: int
   op: Operation
 
+def apply(text: str, op: Operation):
+  if type(op) == Ins:
+    text = f"{text[:op.pos]}{op.value}{text[op.pos:]}"
+  if type(op) == Del:
+    text = text[:op.pos] + text[op.pos+op.value:]
+  return text
 
 class Server:
   def __init__(self) -> None:
@@ -23,12 +29,7 @@ class Server:
     return self.versions[self.version]
 
   def apply(self, op: Operation):
-    latest = self.latest_version
-    if type(op) == Ins:
-      latest = f"{latest[:op.pos]}{op.value}{latest[op.pos:]}"
-    if type(op) == Del:
-      latest = latest[:op.pos] + latest[op.pos+op.value:]
-
+    latest = apply(self.latest_version, op)
     self.versions.append(latest)
     self.messages.append(Message(version=self.version-1, op=op))
 
@@ -46,57 +47,59 @@ class Server:
   def __repr__(self) -> str:
       return f"Server v({self.version})={self.latest_version}"
 
-server = Server()
-
 class Client:
   def __init__(self, name: str, server: Server) -> None:
     self.name = name
     self.text = server.latest_version
     self.buffer: List[Operation] = []
-    self.awaited_op: Operation = None
     self.server: Server = server
     self.version = self.server.version
+    self.awaited_op = None
 
   def apply(self, op: Operation):
     latest = self.text
-    if type(op) == Ins:
-      self.text = f"{latest[:op.pos]}{op.value}{latest[op.pos:]}"
-    if type(op) == Del:
-      self.text = latest[:op.pos] + latest[op.pos+op.value:]
+    self.text = apply(latest, op)
 
   def add(self, op: Operation):
+    if len(self.buffer) == 0:
+      self.awaited_op = op
     self.buffer.append(op)
-  
+
   def send(self):
-    op = self.buffer.pop()
-    self.server.process_message(
-      Message(version=self.version, op=op)
-      )
-    self.awaited_op = op
+    if self.awaited_op:
+      self.server.process_message(
+        Message(version=self.version, op=self.awaited_op)
+        )
+    else:
+      print('Nothing to send')
   
   def receive_from_server(self):
-    def transform_both_ways(o1, o2):
-      f1, f2 = transform(o1, o2), transform(o2, o1)
-      f1.id = o1.id
-      f2.id = o2.id
-      return f1, f2
-
     cur_ver = self.version
     # get messages to receive from server
     server_messages = self.server.messages[cur_ver:]
+    server_text = self.server.latest_version
 
-    for m in server_messages:
-      if self.awaited_op and self.awaited_op.id == m.op.id:
-        # acknowledge the awaiting message
-        self.awaited_op = None
-      else:
-        # transform the incoming operation with the awaited op
-        transformed_op, self.awaited_op = transform_both_ways(m.op, self.awaited_op)
-        # apply the transformed op to the state
-        self.apply(transformed_op)
-        # Finish sync by Transforming the buffer with the incoming message
+    if len(server_messages)>0:
+      if len(self.buffer)>0:
+        # apply transformation to each in the buffer
         for buffer_op in self.buffer:
-          transformed_op = transform(buffer_op, m.op)
-          # update the op in the buffer
-          buffer_op.pos = transformed_op.pos
-      self.version = m.version + 1
+          for m in server_messages:
+            nbm = transform(buffer_op, m.op)
+            buffer_op.pos = nbm.pos
+        
+        # apply messages
+        self.text = server_text
+        for buffer_op in self.buffer:
+          if buffer_op.id == self.awaited_op.id:
+              continue
+          self.text = apply(self.text, buffer_op)
+
+        # pop awaited message
+        for m in server_messages:
+          if self.awaited_op and self.awaited_op.id == m.op.id:
+            self.buffer.pop()
+            self.awaited_op = None
+      else:
+        self.text = server_text  
+      
+      self.version = server_messages[-1].version + 1
