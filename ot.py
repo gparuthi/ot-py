@@ -22,11 +22,11 @@ from uuid import uuid1 as uuid
 class _OperationBase: 
   pos: int
   value: Union[int, str]
-  id: int = uuid()
 
   def __init__(self, pos, value) -> None:
       self.pos = pos
       self.value = value
+      self.id: int = uuid()
 
   def clone(self):
     return self.__class__(pos=self.pos, value=self.value)

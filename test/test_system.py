@@ -33,6 +33,7 @@ def test_process_message():
   assert(s.latest_version == "helloabcd123")
   assert(len(s.messages) == 3)
   assert(s.version == 3)
+  s.messages[-1].op.id == m.op.id
 
   m = Message(0, o4)
   s.process_message(m)
