@@ -82,19 +82,21 @@ class Client:
       return f1, f2
 
     cur_ver = self.version
+    # get messages to receive from server
     server_messages = self.server.messages[cur_ver:]
+
     for m in server_messages:
-      # ack the awaiting message
       if self.awaited_op and self.awaited_op.id == m.op.id:
+        # acknowledge the awaiting message
         self.awaited_op = None
       else:
-        fin, self.awaited_op = transform_both_ways(m.op, self.awaited_op)
-        self.apply(fin)
-        # OT the message with whats in awaited and the buffer
-        for bo in self.buffer:
-          bo2 = transform(bo, m.op)
-          bo.pos = bo2.pos
+        # transform the incoming operation with the awaited op
+        transformed_op, self.awaited_op = transform_both_ways(m.op, self.awaited_op)
+        # apply the transformed op to the state
+        self.apply(transformed_op)
+        # Finish sync by Transforming the buffer with the incoming message
+        for buffer_op in self.buffer:
+          transformed_op = transform(buffer_op, m.op)
+          # update the op in the buffer
+          buffer_op.pos = transformed_op.pos
       self.version = m.version + 1
-
-
-    
