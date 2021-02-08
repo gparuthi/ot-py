@@ -83,9 +83,12 @@ def test_tii():
   to = tii(o1, o2)
   assert_op(to, 10 + len(oi2_val) , oi1_val)
 
-# def test_transform():
-#   oi_val = "hahaha"
-#   o1 = Ins(pos=1, value=oi_val)
-#   o1 = Ins(pos=1, value=oi_val)
-#   o2 = Del(pos=1, value=3)
-#   tid(o1, o2) = transform(o1, o2)
+def test_transform():
+  oi_val = "hahaha"
+  o1 = Ins(pos=1, value=oi_val)
+  o2 = Ins(pos=1, value=oi_val)
+  o3 = Del(pos=1, value=3)
+  assert(tii(o1, o2) == transform(o1, o2))
+  assert(tid(o1, o3) == transform(o1, o3))
+  assert(tdi(o3, o2) == transform(o3, o2))
+  assert(tdd(o3, o3) == transform(o3, o3))

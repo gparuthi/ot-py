@@ -33,6 +33,9 @@ class _OperationBase:
 
   def __repr__(self) -> str:
       return f"{self.__class__.__name__}(p={self.pos}, v={self.value})"
+  
+  def __eq__(self, o: object) -> bool:
+      return self.pos == o.pos and self.value == o.value
 
 class Ins(_OperationBase):
   value: str
@@ -76,14 +79,14 @@ def tdd(od1: Del, od2: Del):
 
 
 def transform(o1: Operation, o2: Operation):
-  first = o1.op
-  sec = o2.op
+  first = type(o1)
+  sec = type(o2)
 
-  if type(first) == Ins and sec == Del:
+  if first == Ins and sec == Del:
     return tid(o1, o2)
-  if type(first) == Ins and sec == Ins:
+  if first == Ins and sec == Ins:
     return tii(o1, o2)
-  if type(first) == Del and sec == Del:
+  if first == Del and sec == Del:
     return tdd(o1, o2)
-  if type(first) == Del and sec == Ins:
+  if first == Del and sec == Ins:
     return tdi(o1, o2)
