@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List
 from ot import Ins, Del, Operation, transform
 
 @dataclass
@@ -7,9 +7,11 @@ class Message:
   version: int
   op: Operation
 
+
 class Server:
-  versions: List[str] = [""]
-  messages: List[Message] = []
+  def __init__(self) -> None:
+    self.versions: List[str] = [""]
+    self.messages: List[Message] = []
 
   @property
   def version(self):
