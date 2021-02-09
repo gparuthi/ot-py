@@ -60,16 +60,20 @@ class Client:
     latest = self.text
     self.text = apply(latest, op)
 
+  def queue_mesage_to_send(self):
+    if not self.awaited_op and len(self.buffer) > 0: 
+      self.awaited_op = self.buffer[0]
+
   def add(self, op: Operation):
-    if len(self.buffer) == 0:
-      self.awaited_op = op
     self.buffer.append(op)
+    self.queue_mesage_to_send()
 
   def send(self):
     if self.awaited_op:
       self.server.process_message(
         Message(version=self.version, op=self.awaited_op)
         )
+      self.queue_mesage_to_send()
     else:
       print('Nothing to send')
   
@@ -80,26 +84,32 @@ class Client:
     server_text = self.server.latest_version
 
     if len(server_messages)>0:
+      self.version = server_messages[-1].version + 1
+
       if len(self.buffer)>0:
+        # check for awaited message in server messages
+        idx = 0
+        while idx < len(server_messages):
+          m = server_messages[idx]
+          if self.awaited_op.id and self.awaited_op.id == m.op.id:
+            # pop and queue next
+            self.awaited_op = None
+            self.buffer.pop(0)
+            server_messages.remove(m)
+            self.queue_mesage_to_send()
+          idx += 1
+            
         # apply transformation to each in the buffer
-        for buffer_op in self.buffer:
-          for m in server_messages:
+        for buffer_op in list(self.buffer):
+          for m in list(server_messages):
             nbm = transform(buffer_op, m.op)
             buffer_op.pos = nbm.pos
         
         # apply messages
         self.text = server_text
         for buffer_op in self.buffer:
-          if buffer_op.id == self.awaited_op.id:
-              continue
           self.text = apply(self.text, buffer_op)
-
-        # pop awaited message
-        for m in server_messages:
-          if self.awaited_op and self.awaited_op.id == m.op.id:
-            self.buffer.pop()
-            self.awaited_op = None
       else:
         self.text = server_text  
       
-      self.version = server_messages[-1].version + 1
+      
